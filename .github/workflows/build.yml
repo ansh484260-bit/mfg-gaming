@@ -1,0 +1,44 @@
+
+name: Build MFG Gaming APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract project
+        run: |
+          mkdir -p project
+          unzip -q *.zip -d project
+          find project -name gradlew -type f
+
+      - name: Build APK
+        run: |
+          WRAPPER=$(find project -name gradlew -type f | head -1)
+          test -n "$WRAPPER"
+          chmod +x "$WRAPPER"
+          cd "$(dirname "$WRAPPER")"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MFG-Gaming-APK
+          path: project/**/build/outputs/apk/debug/*.apk
+          
